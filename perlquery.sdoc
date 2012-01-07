@@ -45,7 +45,8 @@ sub functional_find {my ($f, @directories) = @_;
 sub sub_for {eval "sub {$_[0]}"}
 sub sub_for_noun {return sub{1} if $_[0] eq '*';
                   my @parts = grep length, split /(:[^:\.]+|\.(?!\/)[^:\.]+)/, join '', @_;
-                  $parts[0] =~ s/\//\\\//g, $parts[0] = "/^(.*\\/)?$parts[0]([^a-z\\/][^\\/]*)?\$/" unless $parts[0] =~ /^[:\.](?!\/)/;
+                  s/\//\\\//g for @parts;
+                  $parts[0] = "/^(.*\\/)?$parts[0]([^a-z\\/][^\\/]*)?\$/" unless $parts[0] =~ /^[:\.](?!\/)/;
                   @parts = map /^:(.*)/ ? map("-$_", split('', $1)) : $_, @parts;
                   @parts = map /^\.[^\/]/ ? "/\\$_\$/" : $_, @parts;
                   eval "sub {\$_ = \$_[0] if \@_; " . join('&&', @parts) . "}"}
