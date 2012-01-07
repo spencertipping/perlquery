@@ -10,8 +10,6 @@ Selector syntax is generally identical to jQuery's where applicable. I've made s
 | x y                   select y's that are descendants of x's
   x > y                 select y's that are direct children of x's
   .x                    select files with extension X
-  x + y                 things matching x plus things matching y
-  x - y                 things matching x but not y
   :selector             select things of a given class (these match Perl file operators, listed in perlfunc (1perl))
 
 So, for example, here's how you might go about doing some basic things (I assume you've named this script $ because you're a die-hard jQuery user):
@@ -21,7 +19,7 @@ So, for example, here's how you might go about doing some basic things (I assume
   $ .js                 same as above
   $ :l                  print the name of all links that are descendants of the current directory
   $ :rwx                print the name of all descendants of the current directory that you can read, write, and execute
-  $ '.git refs:d'       prints descendants of ./.git named 'refs' and which are directories
+  $ './.git refs:d'     prints descendants of ./.git named 'refs' and which are directories
 
 Doing things.
 Once you've got a collection, you can do some things with it. The most obvious is writing it to a file, which you can read back later with another $ command. For example:
@@ -46,4 +44,44 @@ You can do things beyond just executing commands on collections. Like jQuery, yo
 | $ .js .parent                         prints the parent directory of every javascript file
   $ .js .parents                        prints all ancestor directories of every javascript file
   $ .js .parents .uniq                  prints all unique ancestor directories of every javascript file, in sorted order
-  $ .js .parents .filter '> .git'       prints all parents containing .git directories
+
+use Cwd        qw/getcwd/;
+use File::Find qw/find/;
+
+sub sub_for {eval "sub {$_[0]}"}
+sub sub_for_noun {my @parts = grep length, split /(:[^:\.]+|\.(?!\/)[^:\.]+)/, join '', @_;
+                  $parts[0] =~ s/\//\\\//g, $parts[0] = "/^(.*\\/)?$parts[0]\$/" unless $parts[0] =~ /^[:\.](?!\/)/;
+                  @parts = map /^:(.*)/ ? map("-$_", split('', $1)) : $_, @parts;
+                  @parts = map /^\.[^\/]/ ? "/\\$_\$/" : $_, @parts;
+                  print "\033[1;32m" . "sub {\$_ = \$File::Find::name; " . join('&&', @parts) . "}" . "\033[0;0m\n";
+                  eval "sub {\$_ = \$File::Find::name // \$_; " . join('&&', @parts) . "}"}
+
+my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x;                            [map {($x = &$f($_)) == 1 ? $_ : $x} @$self]},
+               grep    => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args;                                   [grep(&$f($_), @$self)]},
+               each    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args; system("@quoted '$_'") for @$self; $self},
+               uniq    => sub {my ($self) = @_; my %keys; $keys{$_} = 1 for @$self;                                       [sort keys %keys]},
+               parent  => sub {my ($self) = @_;                                                                           [map {s/\/[^\/]+$//, $_} @$self]});
+
+sub evaluate_receiver {my ($x) = @_;
+                       return [$x] if -e $x && $x !~ /^[:\.](?!\/)/;
+                       [find(sub_for_noun($x), getcwd)]}
+
+sub evaluate {my ($lhs, $operator, $rhs) = @_;
+              print STDERR "\033[1;32m@$lhs : $operator($rhs)\033[0;0m\n";
+              my $f = sub_for_noun $rhs;
+              $lhs ||= [getcwd];
+              print "@$lhs\n";
+              return [map grep(!/\/\.{1,2}$/ && &$f, <$_/*>, <$_/.*>), @$lhs] if $operator eq '>';
+              return @$lhs ? [find($f, @$lhs)] : []         if $operator eq ''}
+
+sub selector {sub is_noun {$_[0] !~ /[>]/}
+              sub strip   {$_[0] =~ s/^\s*(.*?)\s*$/\1/; $_[0]}
+
+              my ($receiver, $text) = @_;
+              my @tokens = map strip($_), split /(\s+[>]\s+|\s+)/, $text;
+              $receiver ||= evaluate_receiver shift @tokens if is_noun $tokens[0];
+              $receiver = evaluate($receiver, $tokens[$_], $tokens[$_ + 1]) for map $_ << 1, 0 .. ($#tokens >> 1);
+              $receiver}
+
+my ($selector) = @ARGV;
+print "$_\n" for @{selector undef, $selector};
