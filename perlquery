@@ -32,27 +32,21 @@
 
 # | $ .js .map 's/.js$//' .each echo      echoes the name of each javascript descendant of the current directory, but without its extension
 
-# Traversal.
-# You can do things beyond just executing commands on collections. Like jQuery, you can also traverse collections:
-
-# | $ .js .parent                         prints the parent directory of every javascript file
-#   $ .js .parents                        prints all ancestor directories of every javascript file
-#   $ .js .parents .uniq                  prints all unique ancestor directories of every javascript file, in sorted order
-
 use Cwd        qw/cwd/;
 use File::Find qw/find/;
 
 sub functional_find {my ($f, @directories) = @_;
                      my @result;
-                     find sub {push @result, $_ if &$f(@_)}, @directories;
+                     find {wanted => sub {push @result, $_ if &$f($_)}, no_chdir => 1}, @directories;
                      @result}
 
 sub sub_for {eval "sub {$_[0]}"}
-sub sub_for_noun {my @parts = grep length, split /(:[^:\.]+|\.(?!\/)[^:\.]+)/, join '', @_;
+sub sub_for_noun {return sub{1} if $_[0] eq '*';
+                  my @parts = grep length, split /(:[^:\.]+|\.(?!\/)[^:\.]+)/, join '', @_;
                   $parts[0] =~ s/\//\\\//g, $parts[0] = "/^(.*\\/)?$parts[0]([^a-z\\/][^\\/]*)?\$/" unless $parts[0] =~ /^[:\.](?!\/)/;
                   @parts = map /^:(.*)/ ? map("-$_", split('', $1)) : $_, @parts;
                   @parts = map /^\.[^\/]/ ? "/\\$_\$/" : $_, @parts;
-                  eval "sub {\$_ = \$File::Find::name // \$_; " . join('&&', @parts) . "}"}
+                  eval "sub {\$_ = \$_[0] if \@_; " . join('&&', @parts) . "}"}
 
 my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x; [map {($x = &$f($_)) eq 1 ? $_ : $x} @$self]},
                grep    => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args;        [grep {&$f($_)} @$self]},
