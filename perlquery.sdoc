@@ -35,6 +35,8 @@ Methods would be lame if they didn't compose, so of course they do:
 use Cwd        qw/cwd/;
 use File::Find qw/find/;
 
+sub strip {$_[0] =~ s/^\s*(.*?)\s*$/\1/; $_[0]}
+
 sub functional_find {my ($f, @directories) = @_;
                      my @result;
                      find {wanted => sub {push @result, $_ if &$f($_)}, no_chdir => 1}, @directories;
@@ -50,7 +52,7 @@ sub sub_for_noun {return sub{1} if $_[0] eq '*';
 
 my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x; [map {($x = &$f($_)) eq 1 ? $_ : $x} @$self]},
                grep    => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args;        [grep {&$f($_)} @$self]},
-               each    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;         [map join('', qx/@quoted '$_'/), @$self]},
+               each    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;         [map strip(join '', qx/@quoted '$_'/), @$self]},
                all     => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self; [split /\n/, join '', qx/@quoted/]},
                uniq    => sub {my ($self) = @_; my %keys; $keys{$_} = 1 for @$self;            [sort keys %keys]},
                size    => sub {my ($self) = @_;                                                [scalar @$self]},
@@ -66,7 +68,6 @@ sub evaluate {my ($lhs, $operator, $rhs) = @_;
               return @$lhs ? [sort(functional_find($f, @$lhs))] : []                  if $operator eq ''}
 
 sub selector {sub is_noun {$_[0] !~ /^[>]?$/}
-              sub strip   {$_[0] =~ s/^\s*(.*?)\s*$/\1/; $_[0]}
 
               my ($receiver, $text) = @_;
               my @tokens = map strip($_), split /(\s+[>]\s+|\s+)/, $text;
