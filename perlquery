@@ -51,7 +51,7 @@ sub sub_for_noun {return sub{1} if $_[0] eq '*';
                   @parts = map /^\.[^\/\.]/ ? "/\\$_(?![a-zA-Z0-9])/" : $_, @parts;
                   eval "sub {\$_ = \$_[0] if \@_; " . join('&&', @parts) . "}"}
 
-my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x; [map {($x = &$f($_)) eq 1 ? $_ : $x} @$self]},
+my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x; [map {($x = &$f($_)) eq 1 || $x eq 0 ? $_ : $x} @$self]},
                grep    => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args;        [grep {&$f($_)} @$self]},
                each    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;         [map strip(join '', qx/@quoted '$_'/), @$self]},
                all     => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self; [split /\n/, join '', qx/@quoted/]},
