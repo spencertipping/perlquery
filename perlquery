@@ -91,7 +91,8 @@ while (@xs) {
   $m =~ s/^\.//;
   push @arguments, shift @xs while @xs && !exists $methods{substr($xs[0], 1)};
 
-  my $f = $methods{$m} or die "no method called $m";
+  unshift @arguments, $m and $m = 'alli' unless exists $methods{$m};
+  my $f = $methods{$m};
   $selection = &$f($selection, @arguments)}
 
 print map("$_\n", @$selection);
