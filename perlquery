@@ -27,6 +27,9 @@
 # | $ .js .map 's/.js$//'                 prints the name of all javascript files without their extensions
 #   $ .js .grep '/[A-Z]/'                 prints the name of all javascript files whose name contains a capital letter
 #   $ .js .each awk '{print $1}'          executes "awk '{print $1}'" on each file individually, building a new collection of the results
+#   $ .js .all awk '{print $1}'           executes "awk '{print $1}'" on all files at once (by passing each filename as a separate argument), building a new collection of the resulting lines
+#   $ .js .eachi vim                      executes "vim" on each file interactively -- that is, with stdout and stdin piped to the terminal normally
+#   $ .js .alli vim                       executes "vim" on all of the files at once interactively -- that is, with stdout and stdin piped to the terminal normally
 
 # Methods would be lame if they didn't compose, so of course they do:
 
@@ -51,13 +54,17 @@ sub sub_for_noun {return sub{1} if $_[0] eq '*';
                   @parts = map /^\.[^\/\.]/ ? "/\\$_(?![a-zA-Z0-9])/" : $_, @parts;
                   eval "sub {\$_ = \$_[0] if \@_; " . join('&&', @parts) . "}"}
 
-my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x; [map {($x = &$f($_)) eq 1 || $x eq '' ? $_ : $x} @$self]},
-               grep    => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args;        [grep {&$f($_)} @$self]},
-               each    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;         [map strip(join '', qx/@quoted '$_'/), @$self]},
-               all     => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self; [split /\n/, join '', qx/@quoted/]},
-               uniq    => sub {my ($self) = @_; my %keys; $keys{$_} = 1 for @$self;            [sort keys %keys]},
-               size    => sub {my ($self) = @_;                                                [scalar @$self]},
-               parent  => sub {my ($self) = @_;                                                [map {s/\/[^\/]+$//, $_} @$self]});
+my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x;                            [map {($x = &$f($_)) eq 1 || $x eq '' ? $_ : $x} @$self]},
+               grep    => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args;                                   [grep {&$f($_)} @$self]},
+
+               each    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;                                    [map strip(join '', qx/@quoted '$_'/), @$self]},
+               all     => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self;                            [split /\n/, join '', qx/@quoted/]},
+               eachi   => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args; system("@quoted '$_'") for @$self; $self},
+               alli    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self; system("@quoted");         $self},
+
+               uniq    => sub {my ($self) = @_; my %keys; $keys{$_} = 1 for @$self;                                       [sort keys %keys]},
+               size    => sub {my ($self) = @_;                                                                           [scalar @$self]},
+               parent  => sub {my ($self) = @_;                                                                           [map {s/\/[^\/]+$//, $_} @$self]});
 
 sub evaluate_receiver {my ($x) = @_;
                        return [$x] if -e $x && $x !~ /^[:\.](?![\/\.])/;
