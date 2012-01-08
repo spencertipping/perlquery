@@ -61,6 +61,7 @@ my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ',
                all     => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self;                            [split /\n/, join '', qx/@quoted/]},
                eachi   => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args; system("@quoted '$_'") for @$self; $self},
                alli    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self; system("@quoted");         $self},
+               test    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;                                    [grep !system("@quoted '$_'"), @$self]},
 
                uniq    => sub {my ($self) = @_; my %keys; $keys{$_} = 1 for @$self;                                       [sort keys %keys]},
                size    => sub {my ($self) = @_;                                                                           [scalar @$self]},
