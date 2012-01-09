@@ -25,6 +25,10 @@ for line in $lines; do
   sum=$(echo $line | awk '{print $1}')
   file=$(echo $line | awk '{print $2}')
 
-  [[ -e sum ]] || (echo "creating md5($file) = $sum" && cp "$file" $sum)
-  rm $file && echo "hardlinking $sum to $file" && ln -s $sum $file
+  if [[ ! -L $file ]]; then
+    [[ -e sum ]] || (echo "creating md5($file) = $sum" && cp "$file" $sum)
+    rm $file && echo "symlinking $sum to $file" && ln -s $sum $file
+  else
+    echo "skipping symlink $file"
+  fi
 done
