@@ -1,6 +1,6 @@
 #!/bin/bash
-# Creates a hardlink filename -> md5(contents) for each file specified by the
-# given selector. Duplicates are merged into hardlinks. For example:
+# Creates a symlink filename -> md5(contents) for each file specified by the
+# given selector. Duplicates are implicitly merged. For example:
 #
 # $ echo foo > bar
 # $ echo foo > bif
@@ -8,8 +8,8 @@
 # d3b07384d113edec49eaa6238ad5ff00  bar
 # $ hardlink-files-to-hashes './ > b..'
 # creating md5(bar) = d3b07384d113edec49eaa6238ad5ff00
-# hardlinking d3b07384d113edec49eaa6238ad5ff00 to bar
-# hardlinking d3b07384d113edec49eaa6238ad5ff00 to bif
+# symlinking d3b07384d113edec49eaa6238ad5ff00 to bar
+# symlinking d3b07384d113edec49eaa6238ad5ff00 to bif
 # $ ls
 # bar
 # bif
@@ -26,5 +26,5 @@ for line in $lines; do
   file=$(echo $line | awk '{print $2}')
 
   [[ -e sum ]] || (echo "creating md5($file) = $sum" && cp "$file" $sum)
-  rm $file && echo "hardlinking $sum to $file" && ln $sum $file
+  rm $file && echo "hardlinking $sum to $file" && ln -s $sum $file
 done
