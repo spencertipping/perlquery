@@ -1,2 +1,6 @@
 Small programs that make use of perlquery. Be sure to read the code before
 running them, as many of them make destructive changes.
+
+NOTE! Don't use symlink-files-to-hashes. It has a bad bug that causes it to
+bork the symlinks for any files in subdirectories. (This has to do with
+relative paths.)
