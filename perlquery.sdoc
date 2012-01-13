@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-perlquery -- jQuery emulation for the command line
+# perlquery -- jQuery emulation for the command line
 
 This program implements jQuery-style selectors over files and directories.
 It also provides manipulation and traversal methods that you can use on
