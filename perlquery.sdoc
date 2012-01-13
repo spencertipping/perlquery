@@ -1,63 +1,39 @@
 #!/usr/bin/perl
-# perlquery -- jQuery emulation for the command line
 
-This program implements jQuery-style selectors over files and directories.
-It also provides manipulation and traversal methods that you can use on
-collections of files. Not all of the concepts have a clear mapping between
-jQuery and the file system, but because the structures are so similar most
-of them map reasonably well.
+JQuery emulation for the command line.
+This program implements jQuery-style selectors over files and directories. It also provides manipulation and traversal methods that you can use on collections of files. Not all of the concepts
+have a clear mapping between jQuery and the file system, but because the structures are so similar most of them map reasonably well.
 
-Selector syntax is generally identical to jQuery's where applicable.
-I've made some changes to be more useful for files. Note that spaces
-are required around all operators.
+Selector syntax.
+Selector syntax is generally identical to jQuery's where applicable. I've made some changes to be more useful for files. Note that spaces are required around all operators.
 
 | x y                   select y's that are descendants of x's
   x > y                 select y's that are direct children of x's
   .x                    select files with extension X
-  :selector             select things of a given class (these match Perl
-                        file operators, listed in perlfunc (1perl))
+  :selector             select things of a given class (these match Perl file operators, listed in perlfunc (1perl))
 
-So, for example, here's how you might go about doing some basic things (I
-assume you've named this script $ because you're a die-hard jQuery user):
+So, for example, here's how you might go about doing some basic things (I assume you've named this script $ because you're a die-hard jQuery user):
 
-| $ '/usr/lib .pl'      print the name of all Perl files that are
-                        descendants of /usr/lib
-  $ './ .js'            print the name of all Javascript files that are
-                        descendants of the current directory
+| $ '/usr/lib .pl'      print the name of all Perl files that are descendants of /usr/lib
+  $ './ .js'            print the name of all Javascript files that are descendants of the current directory
   $ .js                 same as above
-  $ :l                  print the name of all links that are descendants
-                        of the current directory
-  $ :rwx                print the name of all descendants of the current
-                        directory that you can read, write, and execute
-  $ './.git refs:d'     prints descendants of ./.git named 'refs' and which
-                        are directories
+  $ :l                  print the name of all links that are descendants of the current directory
+  $ :rwx                print the name of all descendants of the current directory that you can read, write, and execute
+  $ './.git refs:d'     prints descendants of ./.git named 'refs' and which are directories
 
-Once you've got a collection, you can do some things with it. Perlquery
-supports some methods that you can call on collections. For example:
+Doing things.
+Once you've got a collection, you can do some things with it. Perlquery supports some methods that you can call on collections. For example:
 
-| $ .js .map 's/.js$//'          prints the name of all javascript files
-                                 without their extensions
-  $ .js .grep '/[A-Z]/'          prints the name of all javascript
-                                 files whose name contains a capital letter
-  $ .js .each awk '{print $1}'   executes "awk '{print $1}'" on each file
-                                 individually, building a new collection of
-                                 the results
-  $ .js .all awk '{print $1}'    executes "awk '{print $1}'" on all files at
-                                 once (by passing each filename as a
-                                 separate argument), building a new
-                                 collection of the resulting lines
-  $ .js .eachi vim               executes "vim" on each file interactively
-                                 -- that is, with stdout and stdin piped to
-                                 the terminal normally
-  $ .js .alli vim                executes "vim" on all of the files at once
-                                 interactively -- that is, with stdout and
-                                 stdin piped to the terminal normally
+| $ .js .map 's/.js$//'                 prints the name of all javascript files without their extensions
+  $ .js .grep '/[A-Z]/'                 prints the name of all javascript files whose name contains a capital letter
+  $ .js .each awk '{print $1}'          executes "awk '{print $1}'" on each file individually, building a new collection of the results
+  $ .js .all awk '{print $1}'           executes "awk '{print $1}'" on all files at once (by passing each filename as a separate argument), building a new collection of the resulting lines
+  $ .js .eachi vim                      executes "vim" on each file interactively -- that is, with stdout and stdin piped to the terminal normally
+  $ .js .alli vim                       executes "vim" on all of the files at once interactively -- that is, with stdout and stdin piped to the terminal normally
 
 Methods would be lame if they didn't compose, so of course they do:
 
-| $ .js .map 's/.js$//' .each echo    echoes the name of each javascript
-                                      descendant of the current directory,
-                                      but without its extension
+| $ .js .map 's/.js$//' .each echo      echoes the name of each javascript descendant of the current directory, but without its extension
 
 use Cwd        qw/cwd/;
 use File::Find qw/find/;
