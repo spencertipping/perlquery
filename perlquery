@@ -57,11 +57,17 @@ sub sub_for_noun {return sub{1} if $_[0] eq '*';
 my %methods = (map     => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args; my $x;                            [map {($x = &$f($_)) eq 1 || $x eq '' ? $_ : $x} @$self]},
                grep    => sub {my ($self, @args) = @_; my $f = sub_for join ' ', @args;                                   [grep {&$f($_)} @$self]},
 
+               log     => sub {my ($self, @args) = @_; my $count = @$self; my $name = $args[0] // 'log';                  print STDERR "$name: $count entries\n"; $self},
+
                each    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;                                    [map strip(join '', qx/@quoted '$_'/), @$self]},
                all     => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self;                            [split /\n/, join '', qx/@quoted/]},
                eachi   => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args; system("@quoted '$_'") for @$self; $self},
                alli    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args, @$self; system("@quoted");         $self},
                test    => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;                                    [grep !system("@quoted '$_'"), @$self]},
+               detect  => sub {my ($self, @args) = @_; my @quoted = map "'$_'", @args;                                    !system("@quoted '$_'") and return [$_] for @$self},
+
+               at      => sub {my ($self, @args) = @_;                                                                    [@$self[@args]]},
+               first   => sub {my ($self, @args) = @_;                                                                    [@$self[0 .. ($args[0] || 1) - 1]]},
 
                uniq    => sub {my ($self) = @_; my %keys; $keys{$_} = 1 for @$self;                                       [sort keys %keys]},
                size    => sub {my ($self) = @_;                                                                           [scalar @$self]},
